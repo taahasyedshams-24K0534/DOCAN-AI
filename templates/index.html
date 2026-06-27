@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Docan — AI Document Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #FFFFFF;
+      --surface:  #F4F6F9;
+      --ink:      #0F1117;
+      --mid:      #6B7280;
+      --border:   #E1E4EA;
+      --navy:     #1B3A6B;
+      --navy-dim: #EEF2F9;
+      --green:    #166534;
+      --green-bg: #F0FDF4;
+      --green-br: #BBF7D0;
+      --red:      #991B1B;
+      --red-bg:   #FEF2F2;
+      --red-br:   #FECACA;
+      --mono:     'DM Mono', monospace;
+      --sans:     'Inter', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 0 48px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+    .wordmark {
+      font-family: var(--mono);
+      font-size: 0.92rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    .wordmark span {
+      color: var(--navy);
+    }
+    .header-badge {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--mid);
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 24px 100px;
+    }
+
+    /* ── Page title ── */
+    .page-intro {
+      margin-bottom: 52px;
+    }
+    .page-intro .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--mid);
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+    .page-intro h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+    .page-intro h1 span {
+      color: var(--navy);
+    }
+    .page-intro p {
+      color: var(--mid);
+      font-size: 0.875rem;
+      max-width: 420px;
+      line-height: 1.7;
+    }
+
+    /* ── Section ── */
+    .section {
+      border-top: 1px solid var(--border);
+      padding-top: 32px;
+      margin-bottom: 40px;
+    }
+    .section-label {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 20px;
+    }
+
+    /* ── Upload zone ── */
+    #drop-zone {
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--surface);
+    }
+    #drop-zone:hover, #drop-zone.dragover {
+      border-color: var(--navy);
+      background: var(--navy-dim);
+    }
+    .dz-icon-wrap {
+      width: 32px;
+      height: 40px;
+      margin: 0 auto 14px;
+    }
+    .dz-icon-wrap svg {
+      width: 100%;
+      height: 100%;
+    }
+    #drop-zone .dz-main {
+      font-size: 0.875rem;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    #drop-zone .dz-main span {
+      color: var(--navy);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    #drop-zone .dz-sub {
+      font-size: 0.78rem;
+      color: var(--mid);
+      margin-top: 5px;
+      font-family: var(--mono);
+    }
+    #file-input { display: none; }
+
+    /* Loaded state */
+    #doc-loaded {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--green-bg);
+      border: 1px solid var(--green-br);
+      border-radius: 6px;
+    }
+    .doc-loaded-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .doc-loaded-icon::after {
+      content: '';
+      display: block;
+      width: 10px;
+      height: 6px;
+      border-left: 2px solid #fff;
+      border-bottom: 2px solid #fff;
+      transform: rotate(-45deg) translateY(-1px);
+    }
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .doc-meta {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--green);
+      margin-top: 2px;
+    }
+    .doc-change {
+      font-size: 0.78rem;
+      color: var(--mid);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      border: none;
+      background: none;
+      font-family: var(--sans);
+      padding: 0;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .doc-change:hover { color: var(--ink); }
+
+    /* ── Status ── */
+    #status {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-family: var(--mono);
+    }
+    #status.loading {
+      background: var(--navy-dim);
+      color: var(--navy);
+      border: 1px solid #C7D4F0;
+    }
+    #status.error {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid var(--red-br);
+    }
+
+    /* ── Analysis tabs ── */
+    .tab-strip {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      padding: 8px 18px 10px;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--mid);
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover:not(:disabled) { color: var(--ink); }
+    .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); }
+    .tab-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Result ── */
+    .result-wrap {
+      display: none;
+    }
+    .result-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 10px;
+    }
+    .result-body {
+      font-size: 0.875rem;
+      line-height: 1.8;
+      color: var(--ink);
+      white-space: pre-wrap;
+    }
+
+    /* ── Spinner ── */
+    .spin {
+      display: inline-block;
+      width: 11px; height: 11px;
+      border: 1.5px solid rgba(27,58,107,0.2);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: rot 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes rot { to { transform: rotate(360deg); } }
+
+    /* ── Q&A ── */
+    .qa-row {
+      display: flex;
+      gap: 8px;
+    }
+    .qa-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 10px 13px;
+      font-family: var(--sans);
+      font-size: 0.875rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .qa-input:focus {
+      border-color: var(--navy);
+      background: var(--bg);
+      box-shadow: 0 0 0 3px rgba(27,58,107,0.07);
+    }
+    .qa-input::placeholder { color: #9CA3AF; }
+    .qa-submit {
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+    .qa-submit:hover:not(:disabled) { background: #152f57; }
+    .qa-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .qa-answer-wrap {
+      display: none;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Sources ── */
+    .sources-toggle {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      margin-top: 20px;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--mid);
+      border: none;
+      background: none;
+      font-family: var(--sans);
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .sources-toggle:hover { color: var(--ink); }
+    .sources-toggle svg { flex-shrink: 0; transition: transform 0.2s; }
+    .sources-toggle.open svg { transform: rotate(90deg); }
+    .sources-list { display: none; margin-top: 14px; }
+    .source-item {
+      padding: 12px 14px;
+      border-left: 2px solid var(--border);
+      background: var(--surface);
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      color: var(--mid);
+      font-family: var(--mono);
+    }
+    .source-item strong {
+      display: block;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--navy);
+      margin-bottom: 6px;
+      font-family: var(--sans);
+      font-weight: 600;
+    }
+
+    /* not found */
+    .not-found-box {
+      padding: 14px 16px;
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 5px;
+      font-size: 0.82rem;
+      color: #92400E;
+      line-height: 1.65;
+    }
+    .not-found-box strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #78350F;
+      font-weight: 600;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 20px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--mid);
+      font-family: var(--mono);
+    }
+
+    @media (max-width: 560px) {
+      header { padding: 0 20px; }
+      footer { padding: 20px; flex-direction: column; gap: 6px; }
+      .page-intro h1 { font-size: 1.6rem; }
+      .qa-row { flex-direction: column; }
+      .tab-btn { padding: 8px 12px 10px; font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">doc<span>an</span></div>
+  <span class="header-badge">v1.0</span>
+</header>
+
+<div class="container">
+
+  <div class="page-intro">
+    <div class="eyebrow">AI Document Analyzer</div>
+    <h1>Upload a PDF.<br><span>Get answers instantly.</span></h1>
+    <p>Summarize documents, extract key points, and ask questions — backed by RAG and semantic search.</p>
+  </div>
+
+  <!-- Upload -->
+  <div class="section">
+    <div class="section-label">Document</div>
+
+    <div id="drop-zone" onclick="document.getElementById('file-input').click()" role="button" tabindex="0">
+      <div class="dz-icon-wrap">
+        <svg viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="26" height="35" rx="3" fill="#F4F6F9" stroke="#E1E4EA" stroke-width="1.5"/>
+          <path d="M20 1v7a1 1 0 001 1h7" stroke="#E1E4EA" stroke-width="1.5"/>
+          <line x1="7" y1="15" x2="21" y2="15" stroke="#C8CDD8" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="7" y1="20" x2="21" y2="20" stroke="#C8CDD8" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="7" y1="25" x2="15" y2="25" stroke="#C8CDD8" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <p class="dz-main"><span>Choose a PDF</span> or drag it here</p>
+      <p class="dz-sub">text-based PDFs only · no scanned images</p>
+    </div>
+    <input type="file" id="file-input" accept=".pdf" onchange="handleFileSelect(event)" />
+
+    <div id="doc-loaded">
+      <div class="doc-loaded-icon"></div>
+      <div class="doc-info">
+        <div class="doc-name" id="doc-name">document.pdf</div>
+        <div class="doc-meta" id="doc-meta">indexed and ready</div>
+      </div>
+      <button class="doc-change" onclick="resetUpload()">Change</button>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <!-- Analysis -->
+  <div class="section">
+    <div class="section-label">Analysis</div>
+    <div class="tab-strip">
+      <button class="tab-btn" id="btn-summary" onclick="runAction('summarize')" disabled>Summary</button>
+      <button class="tab-btn" id="btn-keys"    onclick="runAction('keypoints')" disabled>Key points</button>
+      <button class="tab-btn" id="btn-explain" onclick="runAction('explain')"   disabled>Plain English</button>
+    </div>
+
+    <div class="result-wrap" id="analysis-result">
+      <div class="result-eyebrow" id="analysis-label">Result</div>
+      <div class="result-body" id="analysis-text"></div>
+    </div>
+  </div>
+
+  <!-- Q&A -->
+  <div class="section">
+    <div class="section-label">Ask a question</div>
+    <div class="qa-row">
+      <input
+        class="qa-input"
+        id="question-input"
+        type="text"
+        placeholder="What is the main argument of this document?"
+        onkeydown="if(event.key==='Enter') askQuestion()"
+      />
+      <button class="qa-submit" id="btn-ask" onclick="askQuestion()" disabled>Ask</button>
+    </div>
+
+    <div class="qa-answer-wrap" id="qa-result">
+      <div class="result-eyebrow">Answer</div>
+      <div class="result-body" id="qa-text"></div>
+
+      <button class="sources-toggle" id="sources-toggle" onclick="toggleSources()">
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+          <path d="M3 1.5L7 5L3 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Show source excerpts
+      </button>
+      <div class="sources-list" id="sources-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <span>Flask · Groq · FAISS · pdfplumber</span>
+  <span>docan</span>
+</footer>
+
+<script>
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) uploadFile(f);
+  });
+  dz.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') dz.click(); });
+
+  function handleFileSelect(ev) {
+    const f = ev.target.files[0];
+    if (f) uploadFile(f);
+  }
+
+  async function uploadFile(file) {
+    if (!file.name.endsWith('.pdf')) {
+      showStatus('Only PDF files are supported.', 'error');
+      return;
+    }
+    showStatus('<span class="spin"></span> Reading and indexing…', 'loading');
+    setButtons(false);
+
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res  = await fetch('/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok) {
+        hideStatus();
+        showDocLoaded(file.name, data.total_chunks);
+        setButtons(true);
+      } else {
+        showStatus(data.error, 'error');
+      }
+    } catch (err) {
+      showStatus('Network error: ' + err.message, 'error');
+    }
+  }
+
+  function showDocLoaded(name, chunks) {
+    document.getElementById('drop-zone').style.display = 'none';
+    const dl = document.getElementById('doc-loaded');
+    dl.style.display = 'flex';
+    document.getElementById('doc-name').textContent = name;
+    document.getElementById('doc-meta').textContent = chunks + ' chunks indexed';
+  }
+
+  function resetUpload() {
+    document.getElementById('drop-zone').style.display = 'block';
+    document.getElementById('doc-loaded').style.display = 'none';
+    document.getElementById('file-input').value = '';
+    setButtons(false);
+    hideStatus();
+    document.getElementById('analysis-result').style.display = 'none';
+    document.getElementById('qa-result').style.display = 'none';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  }
+
+  async function runAction(action) {
+    const labels = { summarize: 'Summary', keypoints: 'Key points', explain: 'Plain English' };
+    const btnMap  = { summarize: 'btn-summary', keypoints: 'btn-keys', explain: 'btn-explain' };
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(btnMap[action]).classList.add('active');
+
+    showAnalysis('<span class="spin"></span> Generating…', labels[action]);
+    try {
+      const res  = await fetch('/' + action, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        const text = data.summary || data.key_points || data.explanation || 'No result.';
+        showAnalysis(text, labels[action]);
+      } else {
+        showAnalysis('Error: ' + data.error, labels[action]);
+      }
+    } catch (err) {
+      showAnalysis('Network error: ' + err.message, labels[action]);
+    }
+  }
+
+  async function askQuestion() {
+    const q = document.getElementById('question-input').value.trim();
+    if (!q) return;
+
+    const qr = document.getElementById('qa-result');
+    qr.style.display = 'block';
+    document.getElementById('qa-text').innerHTML = '<span class="spin"></span> Searching…';
+    document.getElementById('sources-list').style.display = 'none';
+    document.getElementById('sources-toggle').style.display = 'none';
+    document.getElementById('sources-toggle').classList.remove('open');
+
+    try {
+      const res  = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const answer = data.answer;
+        const notFound = /couldn't find|not in the document|cannot find|not mentioned|no information|does not contain/i.test(answer);
+
+        const qaText = document.getElementById('qa-text');
+        if (notFound) {
+          qaText.innerHTML = `<div class="not-found-box"><strong>Not found in this document</strong>This question doesn't appear to relate to the uploaded PDF. Try asking something more specific to the document's content.</div>`;
+          qaText.style.cssText = '';
+        } else {
+          qaText.textContent = answer;
+          qaText.style.cssText = '';
+        }
+
+        if (!notFound && data.source_chunks && data.source_chunks.length) {
+          const list = document.getElementById('sources-list');
+          list.innerHTML = data.source_chunks.map((c, i) =>
+            `<div class="source-item"><strong>Excerpt ${i + 1}</strong>${c.substring(0, 320)}${c.length > 320 ? '…' : ''}</div>`
+          ).join('');
+          document.getElementById('sources-toggle').style.display = 'flex';
+        }
+      } else {
+        document.getElementById('qa-text').textContent = 'Error: ' + data.error;
+      }
+    } catch (err) {
+      document.getElementById('qa-text').textContent = 'Network error: ' + err.message;
+    }
+  }
+
+  function toggleSources() {
+    const list = document.getElementById('sources-list');
+    const btn  = document.getElementById('sources-toggle');
+    const open = list.style.display === 'block';
+    list.style.display = open ? 'none' : 'block';
+    btn.classList.toggle('open', !open);
+    btn.childNodes[2].textContent = (open ? ' Show' : ' Hide') + ' source excerpts';
+  }
+
+  function showAnalysis(text, label) {
+    const wrap = document.getElementById('analysis-result');
+    wrap.style.display = 'block';
+    document.getElementById('analysis-label').textContent = label;
+    document.getElementById('analysis-text').innerHTML = text;
+  }
+
+  function showStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.style.display = 'block';
+    el.className = type;
+    el.innerHTML = msg;
+  }
+
+  function hideStatus() {
+    document.getElementById('status').style.display = 'none';
+  }
+
+  function setButtons(on) {
+    ['btn-summary', 'btn-keys', 'btn-explain', 'btn-ask'].forEach(id => {
+      document.getElementById(id).disabled = !on;
+    });
+  }
+</script>
+</body>
+</html>
+
