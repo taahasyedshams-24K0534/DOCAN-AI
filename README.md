@@ -52,6 +52,8 @@ An AI-powered document analysis tool that lets you upload PDF files, get instant
    # Windows PowerShell
    $env:GROQ_API_KEY="your_key_here"
 ```
+6. Open in browser
+
 http://127.0.0.1:5000
 
 ## Project Structure
@@ -83,4 +85,4 @@ DOCAN-AI/
    python app.py
 ```
 
-6. Open in browser
+
