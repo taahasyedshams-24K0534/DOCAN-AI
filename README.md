@@ -1,156 +1,61 @@
-============================================================
-  AI DOCUMENT ANALYZER - Student Project
-  BS Computer Science - RAG Demo
-============================================================
+# Docan — AI Document Analyzer
 
-WHAT THIS PROJECT DOES:
-  - Upload a PDF document
-  - Extracts and chunks the text
-  - Builds a FAISS vector index for smart search
-  - Uses OpenAI GPT to answer questions (RAG pattern)
-  - Generates summaries, key points, and simple explanations
+An AI-powered document analysis tool that lets you upload PDF files, get instant summaries, extract key points, and ask questions about your documents using RAG (Retrieval-Augmented Generation).
 
-------------------------------------------------------------
-FOLDER STRUCTURE:
-------------------------------------------------------------
-  ai_doc_analyzer/
-  ├── app.py              ← Flask server (routes/API)
-  ├── rag.py              ← RAG logic (embeddings + search)
-  ├── utils.py            ← PDF extraction + text chunking
-  ├── requirements.txt    ← Python packages to install
-  ├── README.txt          ← This file
-  ├── sample.pdf          ← Test PDF (included)
-  ├── uploads/            ← Uploaded PDFs are saved here
-  └── templates/
-      └── index.html      ← The web interface
+## Features
 
-------------------------------------------------------------
-STEP-BY-STEP INSTALLATION:
-------------------------------------------------------------
+- Upload PDF files
+- AI-generated summaries
+- Extract key points from documents
+- Ask questions and get precise answers based on document content
+- Simple explanation mode for complex documents
 
-STEP 1 — Make sure Python is installed
-  Open terminal/command prompt and run:
-    python --version
-  You need Python 3.9 or higher.
+## Tech Stack
 
-STEP 2 — Create a virtual environment (recommended)
-  cd ai_doc_analyzer
-  python -m venv venv
+- **Backend:** Python, Flask
+- **AI / LLM:** Groq API
+- **Vector Search:** FAISS
+- **PDF Processing:** pdfplumber
+- **Frontend:** HTML, CSS, JavaScript
+- **Architecture:** Retrieval-Augmented Generation (RAG)
 
-  Activate it:
-    Windows:  venv\Scripts\activate
-    Mac/Linux: source venv/bin/activate
+## How RAG Works
 
-STEP 3 — Install required packages
-  pip install -r requirements.txt
+1. PDF is split into chunks
+2. Each chunk is converted to a vector (embedding)
+3. When a question is asked, it's converted to a vector too
+4. FAISS finds the top 3 most relevant chunks
+5. Those chunks + your question are sent to Groq
+6. A focused, accurate answer is returned
 
-  NOTE: If faiss-cpu fails to install, that's okay!
-  The project will fall back to simple cosine similarity.
-  You can try: pip install faiss-cpu --no-cache-dir
+## Setup
 
-STEP 4 — Set your OpenAI API Key
-  You need an OpenAI account and API key.
-  Get one at: https://platform.openai.com/api-keys
+1. Clone the repo
+```bash
+   git clone https://github.com/taahasyedshams-24K0534/DOCAN-AI.git
+   cd DOCAN-AI
+```
 
-  Set the key in your terminal:
+2. Create and activate virtual environment
+```bash
+   python -m venv venv
+   venv\Scripts\activate
+```
 
-    Windows (Command Prompt):
-      set OPENAI_API_KEY=sk-your-key-here
+3. Install dependencies
+```bash
+   pip install -r requirements.txt
+```
 
-    Windows (PowerShell):
-      $env:OPENAI_API_KEY="sk-your-key-here"
+4. Add your Groq API key
+```bash
+   # Windows PowerShell
+   $env:GROQ_API_KEY="your_key_here"
+```
 
-    Mac / Linux:
-      export OPENAI_API_KEY="sk-your-key-here"
+5. Run the app
+```bash
+   python app.py
+```
 
-  ⚠️  IMPORTANT: Never put your API key directly in the code!
-      Always use environment variables.
-
-STEP 5 — Run the application
-  python app.py
-
-STEP 6 — Open in browser
-  Open: http://127.0.0.1:5000
-
-------------------------------------------------------------
-HOW TO USE THE APP:
-------------------------------------------------------------
-
-1. Click "Upload PDF" and select a PDF file
-   (Use the included sample.pdf to test)
-
-2. Wait for processing (30–60 seconds for embedding creation)
-
-3. Click any of the analysis buttons:
-   - "Summary"           → 3-4 sentence overview
-   - "Key Points"        → Numbered list of main ideas
-   - "Simple Explanation"→ Plain language description
-
-4. Type a question in the Q&A box and click "Ask →"
-   - The app finds the most relevant chunks using FAISS
-   - Sends those chunks + your question to OpenAI
-   - Returns a precise answer with source excerpts
-
-------------------------------------------------------------
-HOW RAG WORKS (for your understanding):
-------------------------------------------------------------
-
-Traditional approach: Send entire document to AI → expensive, limited
-
-RAG approach:
-  1. Split doc into chunks (e.g. 500 words each)
-  2. Convert each chunk to a vector (embedding)
-  3. When question asked → convert question to vector too
-  4. Find top 3 chunks closest to question vector (FAISS)
-  5. Send only those 3 chunks + question to OpenAI
-  6. Get a focused, accurate answer
-
-This is what companies like ChatGPT, Perplexity, etc. use
-at a much larger scale!
-
-------------------------------------------------------------
-TROUBLESHOOTING:
-------------------------------------------------------------
-
-ERROR: "No module named 'pdfplumber'"
-  → Run: pip install pdfplumber
-
-ERROR: "Could not extract text from PDF"
-  → Your PDF might be a scanned image (not text-based)
-  → Try a different PDF with actual text
-
-ERROR: "OpenAI API key not set"
-  → Follow STEP 4 above to set your API key
-
-ERROR: faiss-cpu fails to install
-  → The project still works without it (slower search)
-  → Skip it and proceed
-
-QUESTION: Where are uploaded files saved?
-  → In the uploads/ folder inside the project directory
-
-------------------------------------------------------------
-TECHNOLOGIES USED:
-------------------------------------------------------------
-
-  Flask       → Python web framework (server)
-  pdfplumber  → Extract text from PDFs
-  OpenAI API  → GPT-3.5-turbo for answers, ada for embeddings
-  FAISS       → Fast vector similarity search (Facebook AI)
-  NumPy       → Matrix operations for embeddings
-  HTML/CSS/JS → Simple frontend (no React, no frameworks)
-
-------------------------------------------------------------
-PROJECT CONCEPTS DEMONSTRATED:
-------------------------------------------------------------
-
-  ✓ RAG (Retrieval-Augmented Generation)
-  ✓ Text Embeddings & Vector Search
-  ✓ Chunking Strategy with Overlap
-  ✓ REST API Design (Flask routes)
-  ✓ NLP via OpenAI API
-  ✓ Document Understanding
-
-============================================================
-  Made for BS CS Academic Project — Keep it simple! 🎓
-============================================================
+6. Open in browser
