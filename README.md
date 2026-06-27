@@ -52,7 +52,32 @@ An AI-powered document analysis tool that lets you upload PDF files, get instant
    # Windows PowerShell
    $env:GROQ_API_KEY="your_key_here"
 ```
+http://127.0.0.1:5000
 
+## Project Structure
+DOCAN-AI/
+
+├── app.py              ← Flask server (routes/API)
+
+├── rag.py              ← RAG logic (embeddings + search)
+
+├── utils.py            ← PDF extraction + text chunking
+
+├── requirements.txt    ← Dependencies
+
+├── uploads/            ← Uploaded PDFs stored here
+
+└── templates/
+
+└── index.html      ← Web interface
+
+## Concepts Demonstrated
+
+- Retrieval-Augmented Generation (RAG)
+- Text Embeddings and Vector Search
+- Chunking Strategy with Overlap
+- REST API Design with Flask
+- Document Understanding via LLM
 5. Run the app
 ```bash
    python app.py
