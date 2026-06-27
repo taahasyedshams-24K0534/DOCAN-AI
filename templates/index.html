@@ -59,9 +59,7 @@
       letter-spacing: -0.01em;
       color: var(--ink);
     }
-    .wordmark span {
-      color: var(--navy);
-    }
+    .wordmark span { color: var(--navy); }
     .header-badge {
       font-family: var(--mono);
       font-size: 0.68rem;
@@ -77,9 +75,7 @@
     }
 
     /* ── Page title ── */
-    .page-intro {
-      margin-bottom: 52px;
-    }
+    .page-intro { margin-bottom: 52px; }
     .page-intro .eyebrow {
       font-family: var(--mono);
       font-size: 0.72rem;
@@ -95,9 +91,7 @@
       color: var(--ink);
       margin-bottom: 12px;
     }
-    .page-intro h1 span {
-      color: var(--navy);
-    }
+    .page-intro h1 span { color: var(--navy); }
     .page-intro p {
       color: var(--mid);
       font-size: 0.875rem;
@@ -135,20 +129,9 @@
       border-color: var(--navy);
       background: var(--navy-dim);
     }
-    .dz-icon-wrap {
-      width: 32px;
-      height: 40px;
-      margin: 0 auto 14px;
-    }
-    .dz-icon-wrap svg {
-      width: 100%;
-      height: 100%;
-    }
-    #drop-zone .dz-main {
-      font-size: 0.875rem;
-      color: var(--ink);
-      font-weight: 500;
-    }
+    .dz-icon-wrap { width: 32px; height: 40px; margin: 0 auto 14px; }
+    .dz-icon-wrap svg { width: 100%; height: 100%; }
+    #drop-zone .dz-main { font-size: 0.875rem; color: var(--ink); font-weight: 500; }
     #drop-zone .dz-main span {
       color: var(--navy);
       text-decoration: underline;
@@ -174,8 +157,7 @@
     }
     .doc-loaded-icon {
       flex-shrink: 0;
-      width: 20px;
-      height: 20px;
+      width: 20px; height: 20px;
       background: var(--green);
       border-radius: 50%;
       display: flex;
@@ -185,8 +167,7 @@
     .doc-loaded-icon::after {
       content: '';
       display: block;
-      width: 10px;
-      height: 6px;
+      width: 10px; height: 6px;
       border-left: 2px solid #fff;
       border-bottom: 2px solid #fff;
       transform: rotate(-45deg) translateY(-1px);
@@ -267,9 +248,7 @@
     .tab-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
     /* ── Result ── */
-    .result-wrap {
-      display: none;
-    }
+    .result-wrap { display: none; }
     .result-eyebrow {
       font-family: var(--mono);
       font-size: 0.68rem;
@@ -283,8 +262,8 @@
       font-size: 0.875rem;
       line-height: 1.8;
       color: var(--ink);
-      white-space: pre-wrap;
     }
+    .result-body strong { font-weight: 600; }
 
     /* ── Spinner ── */
     .spin {
@@ -300,10 +279,7 @@
     @keyframes rot { to { transform: rotate(360deg); } }
 
     /* ── Q&A ── */
-    .qa-row {
-      display: flex;
-      gap: 8px;
-    }
+    .qa-row { display: flex; gap: 8px; }
     .qa-input {
       flex: 1;
       background: var(--surface);
@@ -353,7 +329,6 @@
       gap: 5px;
       margin-top: 20px;
       cursor: pointer;
-      font-family: var(--mono);
       font-size: 0.72rem;
       color: var(--mid);
       border: none;
@@ -524,6 +499,12 @@
 </footer>
 
 <script>
+  function renderMarkdown(text) {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  }
+
   const dz = document.getElementById('drop-zone');
   dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('dragover'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
@@ -594,8 +575,8 @@
       const res  = await fetch('/' + action, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
-        const text = data.summary || data.key_points || data.explanation || 'No result.';
-        showAnalysis(text, labels[action]);
+        const raw = data.summary || data.key_points || data.explanation || 'No result.';
+        showAnalysis(renderMarkdown(raw), labels[action]);
       } else {
         showAnalysis('Error: ' + data.error, labels[action]);
       }
@@ -629,10 +610,8 @@
         const qaText = document.getElementById('qa-text');
         if (notFound) {
           qaText.innerHTML = `<div class="not-found-box"><strong>Not found in this document</strong>This question doesn't appear to relate to the uploaded PDF. Try asking something more specific to the document's content.</div>`;
-          qaText.style.cssText = '';
         } else {
-          qaText.textContent = answer;
-          qaText.style.cssText = '';
+          qaText.innerHTML = renderMarkdown(answer);
         }
 
         if (!notFound && data.source_chunks && data.source_chunks.length) {
@@ -685,4 +664,3 @@
 </script>
 </body>
 </html>
-
