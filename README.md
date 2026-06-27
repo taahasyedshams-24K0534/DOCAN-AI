@@ -32,7 +32,7 @@ An AI-powered document analysis tool that lets you upload PDF files, get instant
 
 1. Clone the repo
 ```bash
-   git clone https://github.com/taahasyedshams-24K0534/DOCAN-AI.git
+   git clone https://github.com/taahasyedshams/DOCAN-AI.git
    cd DOCAN-AI
 ```
 
